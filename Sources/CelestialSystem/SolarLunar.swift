@@ -1,13 +1,13 @@
 //
 //  SolarLunar.swift
-//  Chinendar
+//  CelestialSystem
 //
 //  Created by Leo Liu on 1/21/25.
 //
 
 import Foundation
 
-public struct SolarLunarData {
+public struct SolarLunarData: Sendable {
     public enum LunarPhase: Int8 {
         case newMoon = 0
         case fullMoon = 1

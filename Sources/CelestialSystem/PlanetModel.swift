@@ -1,6 +1,6 @@
 //
 //  PlanetModel.swift
-//  Chinendar
+//  CelestialSystem
 //
 //  Created by Leo Liu on 10/7/21.
 //
