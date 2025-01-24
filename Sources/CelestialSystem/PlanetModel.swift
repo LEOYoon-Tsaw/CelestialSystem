@@ -8,10 +8,6 @@
 import Foundation
 
 public struct SolarSystem: Sendable, Equatable {
-    public static func == (lhs: SolarSystem, rhs: SolarSystem) -> Bool {
-        lhs.loc?.x == rhs.loc?.x && lhs.loc?.y == rhs.loc?.y && lhs.time == rhs.time && lhs.planets == rhs.planets && lhs.localSiderialTime == rhs.localSiderialTime
-    }
-    
     static let earthRadiiInAU: Double = 1 / 23455
     public static let aeroAdj = 29 / 60 / 180 * Double.pi
 
@@ -48,15 +44,17 @@ public struct SolarSystem: Sendable, Equatable {
     }
 
     public let time: Date
-    public let loc: CGPoint? // x -> lon, y -> lat
+    public let lat: Double?
+    public let lon: Double?
     public let planets: Planets
     public let localSiderialTime: Double? // in radian
 
-    public init(time: Date, loc: CGPoint?, targets: Targets) {
+    public init(time: Date, lat: Double?, lon: Double?, targets: Targets) {
         self.time = time
-        self.loc = loc
+        self.lat = lat
+        self.lon = lon
 
-        let (lst, ra, dec, r, d) = Self.planetPos(T: Self.fromJD2000(date: time), Loc: loc, selection: targets.list)
+        let (lst, ra, dec, r, d) = Self.planetPos(T: Self.fromJD2000(date: time), lat: lat, lon: lon, selection: targets.list)
         localSiderialTime = lst
         planets = .init(sun: .init(loc: .init(ra: ra[0], decl: dec[0], r: r[0]), diameter: d[0]),
                         moon: .init(loc: .init(ra: ra[1], decl: dec[1], r: r[1]), diameter: d[1]),
@@ -76,7 +74,7 @@ public struct SolarSystem: Sendable, Equatable {
 
 // MARK: PRIVATE
 private extension SolarSystem {
-    private static func planetPos(T: Double, Loc: CGPoint?, selection: [Int]) -> (lst: Double?, ra: [Double], dec: [Double], r: [Double], d: [Double]) {
+    private static func planetPos(T: Double, lat: Double?, lon: Double?, selection: [Int]) -> (lst: Double?, ra: [Double], dec: [Double], r: [Double], d: [Double]) {
         // https://www.stjarnhimlen.se/comp/ppcomp.html
 
         // [Sun, Moon, Mercury, Venus, Mars, Jupiter, Saturn]
@@ -233,11 +231,11 @@ private extension SolarSystem {
         }
 
         var lst: Double?
-        if let location = Loc {
-            let gclat = (location.y - 0.1924 * sin(2 * location.y * Double.pi / 180)) * Double.pi / 180
-            let rEarth = 0.99883 + 0.00167 * cos(2 * location.y * Double.pi / 180)
+        if let lat, let lon {
+            let gclat = (lat - 0.1924 * sin(2 * lat * Double.pi / 180)) * Double.pi / 180
+            let rEarth = 0.99883 + 0.00167 * cos(2 * lat * Double.pi / 180)
             let gmst0 = Ls + Double.pi
-            lst = gmst0 + (T - floor(T)) * 2 * Double.pi + location.x * Double.pi / 180
+            lst = gmst0 + (T - floor(T)) * 2 * Double.pi + lon * Double.pi / 180
 
             // Topocentric correction for moon
             if selection.contains(1) {
